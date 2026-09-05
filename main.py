@@ -4,6 +4,7 @@ from langchain_openai import ChatOpenAI
 from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.tools import tool
+from langchain.messages import HumanMessage, AIMessage, SystemMessage
 
 load_dotenv()
 
@@ -12,6 +13,13 @@ llm = ChatOpenAI(
     api_key=os.getenv("API_KEY"),
     base_url=os.getenv("BASE_URL")
 )
+
+conversation = [
+    SystemMessage('You are a helpful weather assistant, who always jokes and is humorous while remaining helpful'),
+    HumanMessage('What is Python?'),
+    AIMessage('A paper and sissors game'),
+    HumanMessage('Really?')
+]
 
 @tool('get_weather', description="Return weather information for a giben city", return_direct=False)
 def get_weather(city: str):
@@ -23,10 +31,6 @@ agent = create_agent(
     system_prompt = 'You are a helpful weather assistant, who always jokes and is humorous while remaining helpful'
 )
 
-response = agent.invoke({
-    'messages':[
-        {'role': 'user', 'content':'What is the weather like in Oberursel?'}
-    ]
-})
-
-print(response["messages"][-1].content_blocks)
+for chunk, _ in agent.stream({"messages": conversation}, stream_mode="messages"):
+    if chunk.content:
+        print(chunk.content, end="", flush=True)

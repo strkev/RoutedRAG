@@ -1,20 +1,21 @@
 from langchain.agents import create_agent
 from langgraph.checkpoint.memory import InMemorySaver
 
-from src.models import get_llm
+from src.models import get_llm, dynamic_model_selection
 from src.schemas import Context
 from src.tools import get_weather, locate_user
 from src.embeddings import retriever_tool
 from src.sys_prompt import user_role_prompt
 
-llm = get_llm()
+base_llm = get_llm("gemma-4-31b-it")
+
 checkpointer = InMemorySaver()
 tools = [locate_user, get_weather, retriever_tool]
 
 agent = create_agent(
-    model=llm,
+    model=base_llm,
     tools=tools,
-    middleware=[user_role_prompt],
+    middleware=[user_role_prompt, dynamic_model_selection],
     context_schema=Context,
     checkpointer=checkpointer,
 )
@@ -29,6 +30,7 @@ response = agent.invoke(
 
 final_text = response["messages"][-1].content
 print(response["messages"][-1].content)
+print("Modell-Metadaten:", response["messages"][-1].response_metadata)
 
 '''
 structured_llm = llm.with_structured_output(WeatherResponse)

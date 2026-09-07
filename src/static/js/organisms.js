@@ -202,15 +202,27 @@ const Organisms = {
   },
 
   // ------------------------------------------------------------------------
-  // Rules Editor Modal
+  // Rules Editor Modal (Themen- & Keyword-Routing)
   // ------------------------------------------------------------------------
   async openRulesEditorModal() {
     try {
-      const config = await API.getRules();
-      State.rulesConfig = config;
+      const [rulesConfig, connsData] = await Promise.all([
+        API.getRules(),
+        API.getConnections()
+      ]);
+      State.rulesConfig = rulesConfig;
+      State.connectionsData = connsData;
+
+      const fallbackConnSelect = document.getElementById('rules-fallback-connection');
+      if (fallbackConnSelect && connsData.connections) {
+        fallbackConnSelect.innerHTML = connsData.connections.map(c => {
+          const isSel = (rulesConfig.default_connection === c.id) ? 'selected' : '';
+          return `<option value="${c.id}" ${isSel}>${Atoms.escapeHtml(c.name || c.id)}</option>`;
+        }).join('');
+      }
 
       const fallbackInput = document.getElementById('rules-fallback-model');
-      if (fallbackInput) fallbackInput.value = config.default_model || '';
+      if (fallbackInput) fallbackInput.value = rulesConfig.default_model || '';
 
       this.renderRulesList();
       this.openModal('rules-modal');
@@ -223,13 +235,15 @@ const Organisms = {
     const list = document.getElementById('rules-list');
     if (!list) return;
 
+    const conns = State.connectionsData ? State.connectionsData.connections : [];
+
     if (!State.rulesConfig.rules || State.rulesConfig.rules.length === 0) {
-      list.innerHTML = '<div style="padding: 16px; color: var(--md-sys-color-on-surface-variant);">Keine Regeln definiert. Füge eine neue Regel hinzu.</div>';
+      list.innerHTML = '<div style="padding: 16px; color: var(--md-sys-color-on-surface-variant); text-align: center;">Keine Themen-Regeln definiert. Klicke auf „+ Regel hinzufügen“.</div>';
       return;
     }
 
     list.innerHTML = State.rulesConfig.rules.map((rule, idx) => {
-      return Molecules.renderRuleCard(rule, idx);
+      return Molecules.renderRuleCard(rule, idx, conns);
     }).join('');
   },
 
@@ -239,26 +253,22 @@ const Organisms = {
     }
   },
 
-  updateRuleValue(index, rawValue) {
+  updateRuleKeywords(index, rawValue) {
     if (State.rulesConfig.rules[index]) {
-      const condType = State.rulesConfig.rules[index].condition_type;
-      if (condType === 'contains_any') {
-        State.rulesConfig.rules[index].condition_value = rawValue.split(',').map(s => s.trim()).filter(Boolean);
-      } else if (condType === 'min_length') {
-        State.rulesConfig.rules[index].condition_value = parseInt(rawValue) || 0;
-      } else {
-        State.rulesConfig.rules[index].condition_value = rawValue.trim();
-      }
+      const keywords = rawValue.split(',').map(s => s.trim()).filter(Boolean);
+      State.rulesConfig.rules[index].keywords = keywords;
     }
   },
 
   addNewRule() {
+    const conns = State.connectionsData ? State.connectionsData.connections : [];
+    const defConn = State.rulesConfig.default_connection || (conns[0] ? conns[0].id : 'uni');
     const newRule = {
       id: 'rule_' + Date.now(),
-      name: 'Neue Regel',
+      name: 'Neues Thema',
+      keywords: ['stichwort'],
+      target_connection: defConn,
       target_model: State.rulesConfig.default_model || 'google/gemma-4-31b-it',
-      condition_type: 'contains_any',
-      condition_value: ['keyword'],
       active: true
     };
     State.rulesConfig.rules.push(newRule);
@@ -274,80 +284,100 @@ const Organisms = {
 
   async saveRules() {
     const fallbackModel = document.getElementById('rules-fallback-model').value.trim();
+    const fallbackConnSelect = document.getElementById('rules-fallback-connection');
+    
     State.rulesConfig.default_model = fallbackModel;
+    if (fallbackConnSelect) {
+      State.rulesConfig.default_connection = fallbackConnSelect.value;
+    }
 
     try {
       await API.saveRules(State.rulesConfig);
       this.closeModal('rules-modal');
-      alert('Routing-Regeln erfolgreich gespeichert!');
     } catch (e) {
       alert('Fehler beim Speichern der Regeln: ' + e.message);
     }
   },
 
   // ------------------------------------------------------------------------
-  // Connections Modal
+  // Connections Modal (Multi-Provider)
   // ------------------------------------------------------------------------
   async openConnectionsModal() {
     try {
-      const conn = await API.getConnections();
-      document.getElementById('conn-base-url').value = conn.base_url || '';
-      document.getElementById('conn-api-key').value = conn.api_key || '';
-      document.getElementById('conn-default-model').value = conn.default_model || '';
-
-      const testResult = document.getElementById('conn-test-result');
-      if (testResult) testResult.innerHTML = '';
-
+      const data = await API.getConnections();
+      State.connectionsData = data;
+      this.renderConnectionsList();
       this.openModal('connections-modal');
     } catch (e) {
       console.error('Error loading connections:', e);
     }
   },
 
-  async testConnection() {
-    const testResult = document.getElementById('conn-test-result');
-    testResult.innerHTML = '<span class="badge">Prüfe Verbindung...</span>';
+  renderConnectionsList() {
+    const list = document.getElementById('connections-list');
+    if (!list) return;
+    const conns = (State.connectionsData && State.connectionsData.connections) ? State.connectionsData.connections : [];
+    const defId = State.connectionsData ? (State.connectionsData.default_connection || (conns[0] ? conns[0].id : '')) : '';
 
-    const conn = {
-      base_url: document.getElementById('conn-base-url').value.trim(),
-      api_key: document.getElementById('conn-api-key').value.trim(),
-      default_model: document.getElementById('conn-default-model').value.trim()
-    };
+    if (conns.length === 0) {
+      list.innerHTML = '<div style="padding: 16px; color: var(--md-sys-color-on-surface-variant); text-align: center;">Keine Verbindungen vorhanden. Klicke auf „+ Verbindung hinzufügen“.</div>';
+      return;
+    }
 
-    try {
-      const res = await API.testConnection(conn);
-      if (res.status === 'success') {
-        const modelCount = res.models ? res.models.length : 0;
-        testResult.innerHTML = Atoms.renderBadge(`Verbindung erfolgreich! (${modelCount} Modelle erreichbar)`, 'success', 'check_circle');
-      } else if (res.status === 'warning') {
-        testResult.innerHTML = Atoms.renderBadge(`Erreicht (HTTP ${res.status_code})`, 'warning', 'info');
-      } else {
-        testResult.innerHTML = Atoms.renderBadge(`Fehler: ${res.error}`, 'error', 'cancel');
+    list.innerHTML = conns.map((conn, idx) => {
+      const isDefault = conn.id === defId;
+      return Molecules.renderConnectionCard(conn, isDefault, idx);
+    }).join('');
+  },
+
+  addNewConnection() {
+    if (!State.connectionsData) State.connectionsData = { default_connection: 'conn_1', connections: [] };
+    const newId = 'conn_' + Date.now();
+    State.connectionsData.connections.push({
+      id: newId,
+      name: 'Neuer Provider',
+      base_url: 'http://localhost:11434/v1',
+      api_key: '',
+      default_model: 'llama3.2:latest'
+    });
+    if (!State.connectionsData.default_connection) {
+      State.connectionsData.default_connection = newId;
+    }
+    this.renderConnectionsList();
+  },
+
+  updateConnectionField(index, field, value) {
+    if (State.connectionsData.connections[index]) {
+      State.connectionsData.connections[index][field] = value;
+    }
+  },
+
+  setDefaultConnection(connId) {
+    if (State.connectionsData) {
+      State.connectionsData.default_connection = connId;
+      this.renderConnectionsList();
+    }
+  },
+
+  deleteConnection(index) {
+    const conns = State.connectionsData.connections;
+    if (conns.length <= 1) {
+      alert('Mindestens eine Verbindung muss erhalten bleiben.');
+      return;
+    }
+    if (confirm('Möchtest du diese Verbindung wirklich löschen?')) {
+      const deletedId = conns[index].id;
+      conns.splice(index, 1);
+      if (State.connectionsData.default_connection === deletedId) {
+        State.connectionsData.default_connection = conns[0].id;
       }
-    } catch (e) {
-      testResult.innerHTML = Atoms.renderBadge(`Verbindungsfehler: ${e.message}`, 'error', 'cancel');
+      this.renderConnectionsList();
     }
   },
 
-  async saveConnections() {
-    const conn = {
-      base_url: document.getElementById('conn-base-url').value.trim(),
-      api_key: document.getElementById('conn-api-key').value.trim(),
-      default_model: document.getElementById('conn-default-model').value.trim()
-    };
-
-    try {
-      await API.saveConnections(conn);
-      this.closeModal('connections-modal');
-      alert('Verbindungseinstellungen gespeichert!');
-    } catch (e) {
-      alert('Fehler beim Speichern: ' + e.message);
-    }
-  },
-
-  toggleApiKeyVisibility() {
-    const input = document.getElementById('conn-api-key');
-    const eye = document.getElementById('conn-api-key-eye');
+  toggleCardKeyVisibility(index) {
+    const input = document.getElementById(`conn-card-key-${index}`);
+    const eye = document.getElementById(`conn-eye-${index}`);
     if (!input || !eye) return;
     if (input.type === 'password') {
       input.type = 'text';
@@ -355,6 +385,37 @@ const Organisms = {
     } else {
       input.type = 'password';
       eye.innerText = 'visibility';
+    }
+  },
+
+  async testSingleConnection(index) {
+    const conn = State.connectionsData.connections[index];
+    if (!conn) return;
+    const testResult = document.getElementById(`conn-test-result-${index}`);
+    if (testResult) testResult.innerHTML = '<span class="badge">Prüfe...</span>';
+
+    try {
+      const res = await API.testConnection(conn);
+      if (res.status === 'success') {
+        const modelCount = res.models ? res.models.length : 0;
+        const modelList = res.models && res.models.length > 0 ? ` (${res.models.slice(0, 3).join(', ')}${res.models.length > 3 ? '...' : ''})` : '';
+        testResult.innerHTML = Atoms.renderBadge(`Erreichbar! (${modelCount} Modelle)${modelList}`, 'success', 'check_circle');
+      } else if (res.status === 'warning') {
+        testResult.innerHTML = Atoms.renderBadge(`Erreicht (HTTP ${res.status_code})`, 'warning', 'info');
+      } else {
+        testResult.innerHTML = Atoms.renderBadge(`Fehler: ${res.error}`, 'error', 'cancel');
+      }
+    } catch (e) {
+      testResult.innerHTML = Atoms.renderBadge(`Fehler: ${e.message}`, 'error', 'cancel');
+    }
+  },
+
+  async saveConnections() {
+    try {
+      await API.saveConnections(State.connectionsData);
+      this.closeModal('connections-modal');
+    } catch (e) {
+      alert('Fehler beim Speichern: ' + e.message);
     }
   },
 
@@ -392,7 +453,6 @@ const Organisms = {
     try {
       const res = await API.updateRagFolder(folder);
       await this.openRagModal();
-      alert('RAG-Ordner aktualisiert & indexiert!');
     } catch (e) {
       alert('Fehler beim Ändern des Ordners: ' + e.message);
     }
@@ -405,7 +465,6 @@ const Organisms = {
     try {
       await API.reindexRag();
       await this.openRagModal();
-      alert('RAG-Wissensbasis erfolgreich neu indiziert!');
     } catch (e) {
       alert('Fehler bei der Re-Indizierung: ' + e.message);
     } finally {
@@ -418,7 +477,6 @@ const Organisms = {
     try {
       await API.uploadRagFile(file);
       await this.openRagModal();
-      alert(`Datei "${file.name}" hochgeladen und indexiert!`);
     } catch (e) {
       alert('Fehler beim Hochladen: ' + e.message);
     }

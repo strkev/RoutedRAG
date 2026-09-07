@@ -150,24 +150,33 @@
 
   <!-- Rules Editor Modal -->
   <div class="modal-overlay" id="rules-modal">
-    <div class="modal-dialog" style="max-width: 820px;">
+    <div class="modal-dialog" style="max-width: 840px;">
       <div class="modal-header">
         <div class="modal-title">
           <span class="material-symbols-outlined">alt_route</span>
-          <span>Routing Rules Editor</span>
+          <span>Themen-Routing Regeln</span>
         </div>
         <button class="btn-icon" onclick="Organisms.closeModal('rules-modal')">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Standard Fallback Modell</label>
-          <input type="text" class="input-text" id="rules-fallback-model" placeholder="google/gemma-4-31b-it">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Standard Fallback Provider</label>
+            <select class="select-box" id="rules-fallback-connection"></select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Standard Fallback Modell</label>
+            <input type="text" class="input-text" id="rules-fallback-model" placeholder="google/gemma-4-31b-it">
+          </div>
         </div>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
-          <h4 style="font-size: 14px; font-weight: 600; color: var(--md-sys-color-on-surface);">Aktive Routing-Regeln</h4>
+          <div>
+            <h4 style="font-size: 14px; font-weight: 600; color: var(--md-sys-color-on-surface);">Aktive Themen-Regeln</h4>
+            <span class="form-hint" style="margin-top: 2px;">Wort- und Stichwort-Matching leitet Prompts automatisch an den gewünschten Provider & Modell</span>
+          </div>
           <button class="btn btn-outlined" onclick="Organisms.addNewRule()">
             <span class="material-symbols-outlined">add</span>
             <span>Regel hinzufügen</span>
@@ -187,59 +196,35 @@
 
   <!-- Connections Modal -->
   <div class="modal-overlay" id="connections-modal">
-    <div class="modal-dialog">
+    <div class="modal-dialog" style="max-width: 840px;">
       <div class="modal-header">
         <div class="modal-title">
           <span class="material-symbols-outlined">hub</span>
-          <span>Verbindungen konfigurieren</span>
+          <span>Modell-Verbindungen & Provider</span>
         </div>
         <button class="btn-icon" onclick="Organisms.closeModal('connections-modal')">
           <span class="material-symbols-outlined">close</span>
         </button>
       </div>
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Base URL (OpenAI-kompatibler Endpunkt)</label>
-          <input type="text" class="input-text" id="conn-base-url" placeholder="https://open-webui.lc.users.h-da.cloud/api">
-          <span class="form-hint">z. B. Open-WebUI, Ollama (http://localhost:11434/v1) oder OpenAI</span>
-        </div>
-        <div class="form-group">
-          <label class="form-label">API Key / Token</label>
-          <div style="position: relative; display: flex; align-items: center;">
-            <input 
-              type="password" 
-              class="input-text" 
-              id="conn-api-key" 
-              placeholder="sk-..."
-              autocomplete="new-password"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              data-1p-ignore="true"
-              data-lpignore="true"
-              name="not-a-password"
-              style="padding-right: 42px;"
-            >
-            <button type="button" class="btn-icon" style="position: absolute; right: 6px; width: 32px; height: 32px;" title="Key anzeigen/verbergen" onclick="Organisms.toggleApiKeyVisibility()">
-              <span class="material-symbols-outlined" id="conn-api-key-eye" style="font-size: 18px;">visibility</span>
-            </button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+          <div>
+            <h4 style="font-size: 14px; font-weight: 600; color: var(--md-sys-color-on-surface);">Verfügbare Provider</h4>
+            <span class="form-hint" style="margin-top: 2px;">Verbinde externe APIs (z. B. Uni-Cluster, OpenAI) oder lokale Instanzen (Ollama, LM Studio). API-Key ist optional.</span>
           </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Standard Modell-Name</label>
-          <input type="text" class="input-text" id="conn-default-model" placeholder="google/gemma-4-31b-it">
-        </div>
-        <div style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
-          <button class="btn btn-outlined" onclick="Organisms.testConnection()">
-            <span class="material-symbols-outlined">network_check</span>
-            <span>Verbindung testen</span>
+          <button class="btn btn-outlined" onclick="Organisms.addNewConnection()">
+            <span class="material-symbols-outlined">add</span>
+            <span>Verbindung hinzufügen</span>
           </button>
-          <div id="conn-test-result"></div>
+        </div>
+
+        <div id="connections-list">
+          <!-- Connection cards injected here -->
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-tonal" onclick="Organisms.closeModal('connections-modal')">Abbrechen</button>
-        <button class="btn btn-filled" onclick="Organisms.saveConnections()">Verbindung Speichern</button>
+        <button class="btn btn-filled" onclick="Organisms.saveConnections()">Verbindungen Speichern</button>
       </div>
     </div>
   </div>

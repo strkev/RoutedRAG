@@ -48,14 +48,10 @@ const ChatWindow = {
     }
 
     if (badgesEl) {
-      const dynamicBadge = State.settings.dynamic_model_enabled
-        ? Atoms.renderBadge('Router: AN', 'success', 'alt_route')
-        : Atoms.renderBadge('Router: AUS', 'warning', 'toggle_off');
-
       const persona = State.settings.active_personality || 'default';
       const personaBadge = Atoms.renderBadge(`Persona: ${persona}`, 'primary', 'psychology');
 
-      badgesEl.innerHTML = `${dynamicBadge} ${personaBadge}`;
+      badgesEl.innerHTML = `${personaBadge}`;
     }
   },
 

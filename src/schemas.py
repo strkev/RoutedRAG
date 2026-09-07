@@ -8,19 +8,21 @@ class Context:
     user_role: str = "default"
     dynamic_model: bool = True
     selected_model: Optional[str] = None
+    selected_connection: Optional[str] = None
     custom_prompt: Optional[str] = None
 
 class RoutingRule(BaseModel):
     id: str
     name: str
+    keywords: List[str] = []
+    target_connection: Optional[str] = None
     target_model: str
-    condition_type: Literal["role_equals", "contains_any", "min_length"]
-    condition_value: Union[str, List[str], int]
     active: bool = True
 
 class RoutingConfig(BaseModel):
-    default_model: str
-    rules: List[RoutingRule]
+    default_connection: Optional[str] = "default"
+    default_model: str = "google/gemma-4-31b-it"
+    rules: List[RoutingRule] = []
 
 class ChatMessageRequest(BaseModel):
     message: str
@@ -28,13 +30,25 @@ class ChatMessageRequest(BaseModel):
     personality: Optional[str] = "default"
     dynamic_model: Optional[bool] = None
     selected_model: Optional[str] = None
+    selected_connection: Optional[str] = None
     custom_prompt: Optional[str] = None
 
 class ChatRenameRequest(BaseModel):
     title: str
 
+class ProviderConnection(BaseModel):
+    id: str
+    name: str
+    base_url: str
+    api_key: Optional[str] = ""
+    default_model: Optional[str] = "google/gemma-4-31b-it"
+
+class MultiConnectionConfig(BaseModel):
+    default_connection: str = "default"
+    connections: List[ProviderConnection] = []
+
 class ConnectionConfig(BaseModel):
-    api_key: str
+    api_key: Optional[str] = ""
     base_url: str
     default_model: Optional[str] = "google/gemma-4-31b-it"
 

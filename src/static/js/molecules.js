@@ -199,16 +199,71 @@ const Molecules = {
     `;
   },
 
-  renderRuleCard(rule, index) {
+  renderConnectionCard(conn, isDefault, index) {
+    const defaultBadge = isDefault
+      ? `<span class="badge" style="background: rgba(168, 199, 250, 0.16); color: var(--md-sys-color-primary); border: 1px solid var(--md-sys-color-primary);">${Atoms.renderIcon('check')} Standard</span>`
+      : `<button class="btn btn-text" style="font-size: 11.5px; height: 28px; padding: 0 8px;" onclick="Organisms.setDefaultConnection('${conn.id}')">Als Standard</button>`;
+
+    return `
+      <div class="connection-card ${isDefault ? 'is-default' : ''}" id="conn-card-${index}">
+        <div class="connection-card-header">
+          <div class="connection-card-title">
+            ${Atoms.renderIcon('hub', 'action-icon')}
+            <input type="text" class="input-text" style="height: 34px; font-weight: 600; width: 220px;" value="${Atoms.escapeHtml(conn.name || 'Verbindung')}" placeholder="Name (z. B. Uni, Ollama)" onchange="Organisms.updateConnectionField(${index}, 'name', this.value)">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            ${defaultBadge}
+            <button class="btn-icon" title="Verbindung löschen" onclick="Organisms.deleteConnection(${index})">
+              ${Atoms.renderIcon('delete')}
+            </button>
+          </div>
+        </div>
+        <div class="connection-card-grid">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Base URL (OpenAI-kompatibel)</label>
+            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(conn.base_url || '')}" placeholder="http://localhost:11434/v1" onchange="Organisms.updateConnectionField(${index}, 'base_url', this.value)">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">API Key / Token <span style="font-weight: normal; font-size: 11px; color: var(--md-sys-color-on-surface-variant);">(Optional)</span></label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" class="input-text" id="conn-card-key-${index}" style="height: 38px; padding-right: 36px;" value="${Atoms.escapeHtml(conn.api_key || '')}" placeholder="Optional (z. B. sk-...)" autocomplete="new-password" onchange="Organisms.updateConnectionField(${index}, 'api_key', this.value)">
+              <button type="button" class="btn-icon" style="position: absolute; right: 4px; width: 28px; height: 28px;" onclick="Organisms.toggleCardKeyVisibility(${index})">
+                <span class="material-symbols-outlined" id="conn-eye-${index}" style="font-size: 16px;">visibility</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Standard Modell-Name</label>
+            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(conn.default_model || '')}" placeholder="z. B. google/gemma-4-31b-it oder llama3.2" onchange="Organisms.updateConnectionField(${index}, 'default_model', this.value)">
+          </div>
+          <div style="display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;">
+            <button class="btn btn-outlined" style="height: 38px; font-size: 12px; width: 100%;" onclick="Organisms.testSingleConnection(${index})">
+              ${Atoms.renderIcon('network_check')} Verbindung testen
+            </button>
+            <div id="conn-test-result-${index}"></div>
+          </div>
+        </div>
+      </div>
+    `;
+  },
+
+  renderRuleCard(rule, index, connectionsList = []) {
     const isChecked = rule.active ? 'checked' : '';
-    const condVal = Array.isArray(rule.condition_value) ? rule.condition_value.join(', ') : rule.condition_value;
-    
+    const keywordsVal = Array.isArray(rule.keywords)
+      ? rule.keywords.join(', ')
+      : (Array.isArray(rule.condition_value) ? rule.condition_value.join(', ') : (rule.keywords || rule.condition_value || ''));
+
+    const connOptions = connectionsList.map(c => {
+      const isSelected = (rule.target_connection === c.id) ? 'selected' : '';
+      return `<option value="${c.id}" ${isSelected}>${Atoms.escapeHtml(c.name || c.id)}</option>`;
+    }).join('');
+
     return `
       <div class="rule-card" id="rule-${index}">
         <div class="rule-card-header">
           <div class="rule-card-title">
-            ${Atoms.renderIcon('rule')}
-            <input type="text" class="input-text" style="height: 34px; font-weight: 600; width: 220px;" value="${Atoms.escapeHtml(rule.name)}" onchange="Organisms.updateRuleField(${index}, 'name', this.value)">
+            ${Atoms.renderIcon('alt_route')}
+            <input type="text" class="input-text" style="height: 34px; font-weight: 600; width: 220px;" value="${Atoms.escapeHtml(rule.name)}" placeholder="Thema (z. B. Coding, Privat)" onchange="Organisms.updateRuleField(${index}, 'name', this.value)">
           </div>
           <div style="display: flex; align-items: center; gap: 12px;">
             <label class="switch" title="Aktivieren / Deaktivieren">
@@ -222,20 +277,18 @@ const Molecules = {
         </div>
         <div class="rule-card-body">
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Bedingungstyp</label>
-            <select class="select-box" style="height: 38px;" onchange="Organisms.updateRuleField(${index}, 'condition_type', this.value)">
-              <option value="contains_any" ${rule.condition_type === 'contains_any' ? 'selected' : ''}>contains_any (Schlüsselwörter)</option>
-              <option value="role_equals" ${rule.condition_type === 'role_equals' ? 'selected' : ''}>role_equals (Benutzerrolle)</option>
-              <option value="min_length" ${rule.condition_type === 'min_length' ? 'selected' : ''}>min_length (Minimale Länge)</option>
+            <label class="form-label">Schlüsselwörter <span style="font-size: 11px; font-weight: normal; color: var(--md-sys-color-on-surface-variant);">(kommagetrennt)</span></label>
+            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(String(keywordsVal))}" placeholder="z. B. python, code, sql, bug" onchange="Organisms.updateRuleKeywords(${index}, this.value)">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label">Ziel-Provider</label>
+            <select class="select-box" style="height: 38px;" onchange="Organisms.updateRuleField(${index}, 'target_connection', this.value)">
+              ${connOptions}
             </select>
           </div>
           <div class="form-group" style="margin-bottom: 0;">
-            <label class="form-label">Bedingungswert</label>
-            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(String(condVal))}" placeholder="z. B. def, class, sql" onchange="Organisms.updateRuleValue(${index}, this.value)">
-          </div>
-          <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label">Ziel-Modell</label>
-            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(rule.target_model)}" placeholder="z. B. qwen/qwen3.8-27B-fp8" onchange="Organisms.updateRuleField(${index}, 'target_model', this.value)">
+            <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(rule.target_model)}" placeholder="z. B. llama3.2 oder qwen3.8" onchange="Organisms.updateRuleField(${index}, 'target_model', this.value)">
           </div>
         </div>
       </div>

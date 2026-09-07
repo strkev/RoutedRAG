@@ -411,6 +411,51 @@
   line-height: 1.4;
 }
 
+/* Connection Card in Manager */
+.connection-card {
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: border-color var(--md-sys-motion-duration);
+}
+
+.connection-card.is-default {
+  border-color: var(--md-sys-color-primary);
+  background-color: rgba(168, 199, 250, 0.04);
+}
+
+.connection-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.connection-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--md-sys-color-on-surface);
+}
+
+.connection-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .connection-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Rule Card in Editor */
 .rule-card {
   background-color: var(--md-sys-color-surface-container);
@@ -440,7 +485,7 @@
 
 .rule-card-body {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr 1fr;
   gap: 12px;
 }
 

@@ -1,29 +1,23 @@
 {
+  "default_connection": "uni",
   "default_model": "google/gemma-4-31b-it",
   "rules": [
     {
-      "id": "coding_rule",
-      "name": "Coding und expert model",
-      "target_model": "qwen/qwen3.8-27B-fp8",
-      "condition_type": "contains_any",
-      "condition_value": [
-        "def",
-        "class",
-        "function",
-        "sql",
+      "id": "coding",
+      "name": "Coding & Entwicklung",
+      "keywords": [
+        "code",
         "python",
+        "sql",
+        "def",
+        "function",
         "bug",
-        "traceback",
-        "```"
+        "script",
+        "programmieren",
+        "class"
       ],
-      "active": true
-    },
-    {
-      "id": "basic",
-      "name": "Allrounder Standard",
-      "target_model": "google/gemma-4-31b-it",
-      "condition_type": "min_length",
-      "condition_value": 0,
+      "target_connection": "uni",
+      "target_model": "qwen/qwen3.8-27B-fp8",
       "active": true
     }
   ]

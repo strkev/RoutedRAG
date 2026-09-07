@@ -456,6 +456,10 @@
   }
 }
 
+.connection-card-test-result:empty {
+  display: none;
+}
+
 /* Rule Card in Editor */
 .rule-card {
   background-color: var(--md-sys-color-surface-container);

@@ -9,6 +9,7 @@ class Context:
     dynamic_model: bool = True
     selected_model: Optional[str] = None
     selected_connection: Optional[str] = None
+    user_message: str = ""
     custom_prompt: Optional[str] = None
 
 class RoutingRule(BaseModel):

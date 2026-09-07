@@ -19,6 +19,20 @@
       "target_connection": "uni",
       "target_model": "qwen/qwen3.8-27B-fp8",
       "active": true
+    },
+    {
+      "id": "rule_1788820173999",
+      "name": "Local",
+      "keywords": [
+        "Lokal",
+        "Privat",
+        "lokal",
+        "local",
+        "private"
+      ],
+      "target_connection": "conn_1788819882235",
+      "target_model": "gemma4:e4b",
+      "active": true
     }
   ]
 }

@@ -7,6 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from src.schemas import Context, ChatMessageRequest, ChatRenameRequest
 from src.agent import agent_instance, extract_token_usage
+from src.models import evaluate_rules
 from src.routes.settings import get_current_settings
 import src.chat_storage as storage
 
@@ -52,8 +53,16 @@ async def send_chat_message(req: ChatMessageRequest):
     
     dynamic_model = req.dynamic_model if req.dynamic_model is not None else global_settings.get("dynamic_model_enabled", True)
     personality = req.personality or global_settings.get("active_personality", "default")
-    selected_model = req.selected_model or global_settings.get("default_model", "google/gemma-4-31b-it")
     custom_prompt = req.custom_prompt or global_settings.get("custom_prompt", "")
+    
+    if dynamic_model:
+        routed_model, routed_conn = evaluate_rules(req.message)
+        selected_model = routed_model
+        selected_connection = routed_conn
+        print(f"[Chat] Dynamisch geroutet für '{req.message[:35]}': Modell='{selected_model}', Provider='{selected_connection}'")
+    else:
+        selected_model = req.selected_model or global_settings.get("default_model", "google/gemma-4-31b-it")
+        selected_connection = getattr(req, "selected_connection", None) or "uni"
     
     # Save user message to database
     storage.save_message(
@@ -68,6 +77,8 @@ async def send_chat_message(req: ChatMessageRequest):
         user_role=personality,
         dynamic_model=dynamic_model,
         selected_model=selected_model,
+        selected_connection=selected_connection,
+        user_message=req.message,
         custom_prompt=custom_prompt
     )
     config = {"configurable": {"thread_id": chat_id}}
@@ -141,8 +152,16 @@ async def stream_chat_message(req: ChatMessageRequest):
 
     dynamic_model = req.dynamic_model if req.dynamic_model is not None else global_settings.get("dynamic_model_enabled", True)
     personality = req.personality or global_settings.get("active_personality", "default")
-    selected_model = req.selected_model or global_settings.get("default_model", "google/gemma-4-31b-it")
     custom_prompt = req.custom_prompt or global_settings.get("custom_prompt", "")
+
+    if dynamic_model:
+        routed_model, routed_conn = evaluate_rules(req.message)
+        selected_model = routed_model
+        selected_connection = routed_conn
+        print(f"[Chat-Stream] Dynamisch geroutet für '{req.message[:35]}': Modell='{selected_model}', Provider='{selected_connection}'")
+    else:
+        selected_model = req.selected_model or global_settings.get("default_model", "google/gemma-4-31b-it")
+        selected_connection = getattr(req, "selected_connection", None) or "uni"
 
     # Save user message immediately before streaming begins
     storage.save_message(
@@ -157,6 +176,8 @@ async def stream_chat_message(req: ChatMessageRequest):
         user_role=personality,
         dynamic_model=dynamic_model,
         selected_model=selected_model,
+        selected_connection=selected_connection,
+        user_message=req.message,
         custom_prompt=custom_prompt
     )
     config = {"configurable": {"thread_id": chat_id}}

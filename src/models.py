@@ -168,8 +168,9 @@ def evaluate_rules(user_msg: str, user_role: str | None = None) -> Tuple[str, st
 def get_llm(model_name: Optional[str] = None, connection_id: Optional[str] = None, temperature: float = 0.3) -> ChatOpenAI:
     conn = get_connection_config(connection_id)
     final_model = model_name or conn.get("default_model", "google/gemma-4-31b-it")
-    base_url = conn.get("base_url") or os.getenv("BASE_URL", "").strip().strip('"').strip("'")
-    
+    raw_base_url = conn.get("base_url") or os.getenv("BASE_URL", "").strip().strip('"').strip("'")
+    base_url = raw_base_url.strip()
+
     # Für lokale Provider wie Ollama ist kein API-Key erforderlich,
     # der OpenAI-Client verlangt jedoch einen nicht-leeren String:
     raw_api_key = conn.get("api_key")
@@ -187,7 +188,13 @@ def get_embeddings(model_name: str = "mxbai-embed-large:latest") -> OpenAIEmbedd
     conn = get_connection_config()
     raw_api_key = conn.get("api_key")
     api_key = raw_api_key.strip() if raw_api_key and raw_api_key.strip() else "ollama"
-    base_url = conn.get("base_url") or os.getenv("BASE_URL", "").strip().strip('"').strip("'")
+    raw_base_url = conn.get("base_url") or os.getenv("BASE_URL", "").strip().strip('"').strip("'")
+    base_url = raw_base_url.strip()
+    if "11434" in base_url:
+        if base_url.endswith("/api"):
+            base_url = base_url[:-4] + "/v1"
+        elif not base_url.endswith("/v1"):
+            base_url = base_url.rstrip("/") + "/v1"
 
     return OpenAIEmbeddings(
         model=model_name,
@@ -210,18 +217,29 @@ def dynamic_model_selection(request: ModelRequest, handler) -> ModelResponse:
         selected_conn = selected_conn or def_conn.get("id", "uni")
         print(f"[Model-Selector] Manuelles Modell: {selected_model} (Provider: {selected_conn})")
     else:
-        last_user_msg = ""
-        for msg in reversed(request.state["messages"]):
-            if msg.type == "human" or getattr(msg, "role", "") == "user":
-                last_user_msg = str(msg.content)
-                break
+        # 1. Bevorzuge user_message direkt aus dem Context
+        user_msg = getattr(context, "user_message", "")
+        # 2. Fallback: Nachrichten im State durchsuchen
+        if not user_msg and hasattr(request, "state") and "messages" in request.state:
+            for msg in reversed(request.state["messages"]):
+                msg_role = getattr(msg, "type", None) or getattr(msg, "role", None) or (msg.get("role") if isinstance(msg, dict) else None)
+                if msg_role in ("human", "user"):
+                    content = getattr(msg, "content", None) or (msg.get("content") if isinstance(msg, dict) else None)
+                    if content:
+                        user_msg = str(content)
+                        break
 
-        selected_model, selected_conn = evaluate_rules(last_user_msg)
-        print(f"[Rule-Engine] Dynamisch gewählt: {selected_model} (Provider: {selected_conn})")
+        selected_model, selected_conn = evaluate_rules(user_msg)
+        print(f"[Rule-Engine] Dynamisch gewählt: {selected_model} (Provider: {selected_conn}) für User-Prompt: {user_msg[:50]}")
 
     if context:
         setattr(context, "selected_model", selected_model)
         setattr(context, "selected_connection", selected_conn)
 
-    request.model = get_llm(model_name=selected_model, connection_id=selected_conn)
+    new_model = get_llm(model_name=selected_model, connection_id=selected_conn)
+    if hasattr(request, "tools") and request.tools:
+        request.model = new_model.bind_tools(request.tools)
+    else:
+        request.model = new_model
+
     return handler(request)

@@ -236,13 +236,14 @@ const Molecules = {
             <label class="form-label">Standard Modell-Name</label>
             <input type="text" class="input-text" style="height: 38px;" value="${Atoms.escapeHtml(conn.default_model || '')}" placeholder="z. B. google/gemma-4-31b-it oder llama3.2" onchange="Organisms.updateConnectionField(${index}, 'default_model', this.value)">
           </div>
-          <div style="display: flex; flex-direction: column; justify-content: flex-end; gap: 6px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="opacity: 0; user-select: none;">&nbsp;</label>
             <button class="btn btn-outlined" style="height: 38px; font-size: 12px; width: 100%;" onclick="Organisms.testSingleConnection(${index})">
               ${Atoms.renderIcon('network_check')} Verbindung testen
             </button>
-            <div id="conn-test-result-${index}"></div>
           </div>
         </div>
+        <div class="connection-card-test-result" id="conn-test-result-${index}"></div>
       </div>
     `;
   },

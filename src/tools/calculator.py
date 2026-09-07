@@ -1,6 +1,6 @@
 from langchain_core.tools import tool
 
-@tool("calculator", description="Berechnet mathematische Ausdrücke wie z.B. 12 * 45 oder sqrt(144).")
+@tool("calculator", description=" Calculates mathematical expressions like 12 * 45 or sqrt(144).", return_direct=False)
 def calculate(expression: str) -> str:
     try:
         allowed_names = {"abs": abs, "round": round, "min": min, "max": max}

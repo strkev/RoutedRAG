@@ -52,6 +52,10 @@ const Organisms = {
 
   async startNewChat() {
     if (State.isStreaming) return;
+    try {
+      localStorage.removeItem('routedrag_active_chat_id');
+      history.replaceState(null, '', window.location.pathname);
+    } catch (_) {}
     State.setActiveChat(null);
     ChatWindow.renderMessages();
     ChatWindow.updateHeader();
@@ -64,6 +68,11 @@ const Organisms = {
     try {
       const chat = await API.getChat(chatId);
       State.setActiveChat(chat);
+      try {
+        localStorage.setItem('routedrag_active_chat_id', chatId);
+        history.replaceState(null, '', '#' + chatId);
+      } catch (_) {}
+
       if (chat.personality) {
         State.settings.active_personality = chat.personality;
       }
@@ -79,6 +88,7 @@ const Organisms = {
       document.querySelector('.sidebar')?.classList.remove('mobile-open');
     } catch (e) {
       console.error('Error selecting chat:', e);
+      throw e;
     }
   },
 

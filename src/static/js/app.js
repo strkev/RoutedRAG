@@ -131,6 +131,10 @@ const ChatWindow = {
         messages: []
       };
       State.activeChatId = chatId;
+      try {
+        localStorage.setItem('routedrag_active_chat_id', chatId);
+        history.replaceState(null, '', '#' + chatId);
+      } catch (_) {}
     }
 
     // Add user message to UI
@@ -193,6 +197,10 @@ const ChatWindow = {
           State.activeChat.id = data.chat_id;
           State.activeChatId = data.chat_id;
         }
+        try {
+          localStorage.setItem('routedrag_active_chat_id', data.chat_id);
+          history.replaceState(null, '', '#' + data.chat_id);
+        } catch (_) {}
       },
       onToken: (token) => {
         accumulatedContent += token;
@@ -263,6 +271,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Init Sidebar & ChatWindow
     await Organisms.initSidebar();
     ChatWindow.init();
+
+    // Restore active chat if page was refreshed
+    const targetChatId = window.location.hash.replace('#', '') || localStorage.getItem('routedrag_active_chat_id');
+    if (targetChatId) {
+      try {
+        await Organisms.selectChat(targetChatId);
+      } catch (err) {
+        console.warn('Could not restore previous chat session:', err);
+        localStorage.removeItem('routedrag_active_chat_id');
+        try {
+          history.replaceState(null, '', window.location.pathname);
+        } catch (_) {}
+      }
+    }
 
     // Setup Mobile menu toggle
     const mobileBtn = document.getElementById('mobile-menu-btn');

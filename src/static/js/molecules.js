@@ -7,41 +7,68 @@ const Molecules = {
     if (!text) return '';
     let html = Atoms.escapeHtml(text);
 
-    // Code blocks with syntax highlighting container
-    html = html.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
-      const language = lang || 'code';
-      return `
-        <div class="code-block-container" style="position: relative; margin: 12px 0;">
-          <div style="display: flex; justify-content: space-between; align-items: center; background: #202224; padding: 4px 12px; border-top-left-radius: 6px; border-top-right-radius: 6px; font-size: 11px; color: #8e918f; border: 1px solid var(--md-sys-color-outline-variant); border-bottom: none;">
-            <span>${language}</span>
-            <button class="btn btn-text" style="height: 24px; padding: 0 6px; font-size: 11px;" onclick="Molecules.copyCode(this)">Kopieren</button>
-          </div>
-          <pre style="margin: 0; border-top-left-radius: 0; border-top-right-radius: 0;"><code>${code}</code></pre>
-        </div>
-      `;
+    // 1. Extract fenced Code Blocks into placeholders to prevent newline/markdown conversion
+    const codeBlocks = [];
+    html = html.replace(/```([a-zA-Z0-9_-]*)\n?([\s\S]*?)```/g, (match, lang, code) => {
+      const language = (lang || 'code').trim();
+      const cleanCode = code.replace(/\n+$/, '');
+      const placeholder = `___CODEBLOCK_${codeBlocks.length}___`;
+      const blockHtml = `<div class="code-block-container"><div class="code-block-header"><span>${language}</span><button class="btn btn-text" style="height: 24px; padding: 0 8px; font-size: 11px;" onclick="Molecules.copyCode(this)">Kopieren</button></div><pre><code>${cleanCode}</code></pre></div>`;
+      codeBlocks.push(blockHtml);
+      return `\n\n${placeholder}\n\n`;
     });
 
-    // Inline code
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 2. Extract Inline Code into placeholders
+    const inlineCodes = [];
+    html = html.replace(/`([^`]+)`/g, (match, code) => {
+      const placeholder = `___INLINECODE_${inlineCodes.length}___`;
+      inlineCodes.push(`<code>${code}</code>`);
+      return placeholder;
+    });
 
-    // Bold & Italics
+    // 3. Headers
+    html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 16px; margin: 12px 0 6px 0; color: var(--md-sys-color-primary); font-weight: 600;">$1</h3>');
+    html = html.replace(/^## (.*$)/gim, '<h2 style="font-size: 18px; margin: 14px 0 8px 0; color: var(--md-sys-color-on-surface); font-weight: 600;">$1</h2>');
+    html = html.replace(/^# (.*$)/gim, '<h1 style="font-size: 20px; margin: 16px 0 10px 0; color: var(--md-sys-color-on-surface); font-weight: 600;">$1</h1>');
+
+    // 4. Bold & Italics
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/\*([^*]+)\*/g, '<em>$1</em>');
 
-    // Headers
-    html = html.replace(/^### (.*$)/gim, '<h3 style="font-size: 16px; margin: 12px 0 6px 0; color: var(--md-sys-color-primary);">$1</h3>');
-    html = html.replace(/^## (.*$)/gim, '<h2 style="font-size: 18px; margin: 14px 0 8px 0; color: var(--md-sys-color-on-surface);">$1</h2>');
-    html = html.replace(/^# (.*$)/gim, '<h1 style="font-size: 20px; margin: 16px 0 10px 0; color: var(--md-sys-color-on-surface);">$1</h1>');
-
-    // Unordered lists
+    // 5. Unordered lists
     html = html.replace(/^\s*-\s+(.*$)/gim, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+    html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>');
+    html = html.replace(/<\/ul>\s*<ul>/g, '');
 
-    // Paragraph breaks
-    html = html.replace(/\n\n/g, '</p><p>');
+    // 6. Paragraph breaks
+    html = html.replace(/\n\s*\n/g, '</p><p>');
     html = html.replace(/\n/g, '<br>');
+    html = `<p>${html}</p>`;
 
-    return `<p>${html}</p>`;
+    // 7. Clean up empty tags and invalid block nesting
+    html = html.replace(/<p>\s*<\/p>/g, '');
+    html = html.replace(/<p>\s*<br\s*\/?>\s*/gi, '<p>');
+    html = html.replace(/<br\s*\/?>\s*<\/p>/gi, '</p>');
+    html = html.replace(/<p>\s*(<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>)\s*<\/p>/gi, '$1');
+    html = html.replace(/<p>\s*(<ul>[\s\S]*?<\/ul>)\s*<\/p>/gi, '$1');
+
+    // 8. Re-insert Code Blocks (stripping enclosing <p> wrapper if any)
+    codeBlocks.forEach((block, i) => {
+      const placeholder = `___CODEBLOCK_${i}___`;
+      const pWrapperRegex = new RegExp(`<p>\\s*(?:<br\\s*\\/?>)?\\s*${placeholder}\\s*(?:<br\\s*\\/?>)?\\s*<\\/p>`, 'g');
+      if (pWrapperRegex.test(html)) {
+        html = html.replace(pWrapperRegex, block);
+      } else {
+        html = html.replace(placeholder, block);
+      }
+    });
+
+    // 9. Re-insert Inline Codes
+    inlineCodes.forEach((code, i) => {
+      html = html.replace(`___INLINECODE_${i}___`, code);
+    });
+
+    return html;
   },
 
   copyCode(btn) {

@@ -1,12 +1,21 @@
 {
-    "default_model": "google/gemma-4-31b-it",
-    "rules": [
+  "default_model": "google/gemma-4-31b-it",
+  "rules": [
     {
       "id": "coding_rule",
       "name": "Coding und expert model",
       "target_model": "qwen/qwen3.8-27B-fp8",
       "condition_type": "contains_any",
-      "condition_value": ["def ", "class ", "function", "sql", "bug", "traceback", "```"],
+      "condition_value": [
+        "def",
+        "class",
+        "function",
+        "sql",
+        "python",
+        "bug",
+        "traceback",
+        "```"
+      ],
       "active": true
     },
     {

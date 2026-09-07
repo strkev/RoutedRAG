@@ -19,3 +19,8 @@ env/
 .DS_Store
 .AppleDouble
 .LSOverride
+
+data/*.db
+data/chats.db*
+config/connections.json
+config/app_settings.json

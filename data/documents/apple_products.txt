@@ -1,0 +1,5 @@
+Apple is a technology company headquartered in Cupertino, California.
+Apple produces Mac computers, iPhone smartphones, iPad tablets, and watches.
+The MacBook M3 is an Apple Silicon computer with high efficiency and unified memory architecture.
+Oranges and Apples are both fruits, rich in vitamins and dietary fiber.
+LangChain and LangGraph are frameworks for building stateful agentic AI applications with tool calling and routing.

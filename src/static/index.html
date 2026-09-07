@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RoutedRAG AI Agent</title>
+  
+  <!-- Google Fonts: Roboto & Material Symbols Outlined -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+  
+  <!-- Stylesheets (Atomic Design Structure) -->
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar Organism -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <span class="material-symbols-outlined brand-icon">neurology</span>
+          <span>RoutedRAG</span>
+        </div>
+      </div>
+
+      <button class="btn-new-chat" onclick="Organisms.startNewChat()">
+        <span class="material-symbols-outlined">add</span>
+        <span>Neuer Chat</span>
+      </button>
+
+      <!-- Quick Dynamic Model Selector Toggle -->
+      <div class="sidebar-quick-switch">
+        <div class="quick-switch-label">
+          <span class="quick-switch-title">Dynamic Router</span>
+          <span class="quick-switch-sub">Automatische Modellwahl</span>
+        </div>
+        <label class="switch" title="Dynamic Model Selector an- oder ausschalten">
+          <input type="checkbox" id="sidebar-dynamic-toggle" checked onchange="Organisms.toggleDynamicModel(this.checked)">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- Chats History -->
+      <div class="chat-section-label">Verlauf</div>
+      <div class="sidebar-chats-container" id="sidebar-chats-list">
+        <!-- Injected via Molecules.renderSidebarItem -->
+      </div>
+
+      <!-- Show more button -->
+      <button class="btn btn-tonal btn-show-more" id="btn-show-more" style="display: none;" onclick="Organisms.loadMoreChats()">
+        <span class="material-symbols-outlined">expand_more</span>
+        <span>Mehr anzeigen</span>
+      </button>
+
+      <!-- Sidebar Footer Actions -->
+      <div class="sidebar-footer">
+        <button class="sidebar-action-btn" onclick="Organisms.openSettingsModal()">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Einstellungen & Personalities</span>
+        </button>
+        <button class="sidebar-action-btn" onclick="Organisms.openRulesEditorModal()">
+          <span class="material-symbols-outlined">alt_route</span>
+          <span>Rules Editor</span>
+        </button>
+        <button class="sidebar-action-btn" onclick="Organisms.openConnectionsModal()">
+          <span class="material-symbols-outlined">hub</span>
+          <span>Verbindungen hinzufügen</span>
+        </button>
+        <button class="sidebar-action-btn" onclick="Organisms.openRagModal()">
+          <span class="material-symbols-outlined">folder_open</span>
+          <span>RAG Ressourcen</span>
+        </button>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- Main Chat Window Organism -->
+    <main class="chat-window">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="chat-header-info">
+          <button class="btn-icon mobile-menu-btn" id="mobile-menu-btn" title="Menü öffnen">
+            <span class="material-symbols-outlined">menu</span>
+          </button>
+          <span class="chat-title-text" id="chat-header-title">Neuer Chat</span>
+        </div>
+        <div class="chat-header-badges" id="chat-header-badges">
+          <!-- Injected badges -->
+        </div>
+      </header>
+
+      <!-- Messages Scroll Area -->
+      <div class="messages-scroll-area" id="messages-scroll-area">
+        <!-- Messages or Empty Welcome Screen injected here -->
+      </div>
+
+      <!-- Chat Input Area -->
+      <div class="chat-input-container">
+        <div class="chat-input-bar">
+          <textarea class="chat-textarea" id="chat-input-textarea" placeholder="Nachricht an den Assistenten..." rows="1"></textarea>
+          <div class="chat-input-actions">
+            <button class="btn btn-filled" id="btn-send-message" style="width: 40px; height: 40px; padding: 0; border-radius: 50%;" title="Nachricht senden">
+              <span class="material-symbols-outlined">arrow_upward</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="material-symbols-outlined">settings</span>
+          <span>Einstellungen & Persönlichkeiten</span>
+        </div>
+        <button class="btn-icon" onclick="Organisms.closeModal('settings-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Persönlichkeit (System Prompt)</label>
+          <div class="personality-grid" id="personalities-grid">
+            <!-- Personality Cards injected here -->
+          </div>
+        </div>
+
+        <div class="form-group" id="custom-prompt-container" style="display: none;">
+          <label class="form-label">Eigener System Prompt</label>
+          <textarea class="input-textarea" id="settings-custom-prompt" rows="3" placeholder="Du bist ein freundlicher Assistent..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Standard / Fallback Modell</label>
+          <input type="text" class="input-text" id="settings-default-model" placeholder="google/gemma-4-31b-it">
+          <span class="form-hint">Wird verwendet, wenn der Dynamic Router AUS ist oder keine Regel greift.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-tonal" onclick="Organisms.closeModal('settings-modal')">Abbrechen</button>
+        <button class="btn btn-filled" onclick="Organisms.saveSettings()">Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rules Editor Modal -->
+  <div class="modal-overlay" id="rules-modal">
+    <div class="modal-dialog" style="max-width: 820px;">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="material-symbols-outlined">alt_route</span>
+          <span>Routing Rules Editor</span>
+        </div>
+        <button class="btn-icon" onclick="Organisms.closeModal('rules-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Standard Fallback Modell</label>
+          <input type="text" class="input-text" id="rules-fallback-model" placeholder="google/gemma-4-31b-it">
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0 12px 0;">
+          <h4 style="font-size: 14px; font-weight: 600; color: var(--md-sys-color-on-surface);">Aktive Routing-Regeln</h4>
+          <button class="btn btn-outlined" onclick="Organisms.addNewRule()">
+            <span class="material-symbols-outlined">add</span>
+            <span>Regel hinzufügen</span>
+          </button>
+        </div>
+
+        <div id="rules-list">
+          <!-- Rule cards injected here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-tonal" onclick="Organisms.closeModal('rules-modal')">Abbrechen</button>
+        <button class="btn btn-filled" onclick="Organisms.saveRules()">Regeln Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connections Modal -->
+  <div class="modal-overlay" id="connections-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="material-symbols-outlined">hub</span>
+          <span>Verbindungen konfigurieren</span>
+        </div>
+        <button class="btn-icon" onclick="Organisms.closeModal('connections-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Base URL (OpenAI-kompatibler Endpunkt)</label>
+          <input type="text" class="input-text" id="conn-base-url" placeholder="https://open-webui.lc.users.h-da.cloud/api">
+          <span class="form-hint">z. B. Open-WebUI, Ollama (http://localhost:11434/v1) oder OpenAI</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">API Key / Token</label>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input 
+              type="password" 
+              class="input-text" 
+              id="conn-api-key" 
+              placeholder="sk-..."
+              autocomplete="new-password"
+              autocorrect="off"
+              autocapitalize="off"
+              spellcheck="false"
+              data-1p-ignore="true"
+              data-lpignore="true"
+              name="not-a-password"
+              style="padding-right: 42px;"
+            >
+            <button type="button" class="btn-icon" style="position: absolute; right: 6px; width: 32px; height: 32px;" title="Key anzeigen/verbergen" onclick="Organisms.toggleApiKeyVisibility()">
+              <span class="material-symbols-outlined" id="conn-api-key-eye" style="font-size: 18px;">visibility</span>
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Standard Modell-Name</label>
+          <input type="text" class="input-text" id="conn-default-model" placeholder="google/gemma-4-31b-it">
+        </div>
+        <div style="margin-top: 14px; display: flex; align-items: center; justify-content: space-between;">
+          <button class="btn btn-outlined" onclick="Organisms.testConnection()">
+            <span class="material-symbols-outlined">network_check</span>
+            <span>Verbindung testen</span>
+          </button>
+          <div id="conn-test-result"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-tonal" onclick="Organisms.closeModal('connections-modal')">Abbrechen</button>
+        <button class="btn btn-filled" onclick="Organisms.saveConnections()">Verbindung Speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RAG Resources Modal -->
+  <div class="modal-overlay" id="rag-modal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div class="modal-title">
+          <span class="material-symbols-outlined">folder_open</span>
+          <span>RAG Wissensressourcen</span>
+        </div>
+        <button class="btn-icon" onclick="Organisms.closeModal('rag-modal')">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Dokumenten-Ordnerpfad</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" class="input-text" id="rag-folder-path" placeholder="data/documents">
+            <button class="btn btn-tonal" onclick="Organisms.updateRagFolder()">Pfad setzen</button>
+          </div>
+          <span class="form-hint">Lokaler Ordner mit .txt, .md, .csv, .json oder .py Dateien.</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 16px 0;">
+          <div class="rule-card" style="margin-bottom: 0; padding: 12px;">
+            <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">Dokumente</span>
+            <span style="font-size: 20px; font-weight: 700; color: var(--md-sys-color-primary);" id="rag-total-docs">0</span>
+          </div>
+          <div class="rule-card" style="margin-bottom: 0; padding: 12px;">
+            <span style="font-size: 11px; color: var(--md-sys-color-on-surface-variant);">Indizierte Chunks</span>
+            <span style="font-size: 20px; font-weight: 700; color: var(--md-sys-color-success);" id="rag-total-chunks">0</span>
+          </div>
+        </div>
+
+        <!-- File upload dropzone -->
+        <div class="file-dropzone" id="rag-dropzone">
+          <input type="file" id="rag-file-input" style="display: none;" accept=".txt,.md,.json,.csv,.py">
+          <span class="material-symbols-outlined" style="font-size: 36px; color: var(--md-sys-color-primary); margin-bottom: 6px;">cloud_upload</span>
+          <div style="font-weight: 500; font-size: 14px;">Dateien hier ablegen oder klicken zum Hochladen</div>
+          <div style="font-size: 12px; color: var(--md-sys-color-on-surface-variant); margin-top: 4px;">.txt, .md, .json, .csv, .py</div>
+        </div>
+
+        <div style="margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h5 style="font-size: 13px; font-weight: 600; color: var(--md-sys-color-on-surface);">Erfasste Dateien:</h5>
+            <button class="btn btn-text" id="btn-reindex-rag" onclick="Organisms.reindexRag()">
+              <span class="material-symbols-outlined">sync</span>
+              <span>Neu indizieren</span>
+            </button>
+          </div>
+          <ul id="rag-files-list" style="max-height: 120px; overflow-y: auto; font-size: 13px; padding-left: 20px; color: var(--md-sys-color-on-surface-variant);">
+            <!-- Injected file list -->
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-filled" onclick="Organisms.closeModal('rag-modal')">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/static/js/api.js"></script>
+  <script src="/static/js/state.js"></script>
+  <script src="/static/js/atoms.js"></script>
+  <script src="/static/js/molecules.js"></script>
+  <script src="/static/js/organisms.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

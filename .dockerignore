@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode
+.DS_Store
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+data/chats.db

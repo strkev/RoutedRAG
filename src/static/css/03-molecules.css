@@ -1,0 +1,406 @@
+/* ==========================================================================
+   ATOMIC DESIGN LEVEL 2: MOLECULES
+   ========================================================================== */
+
+/* Chat Input Bar (Gemini / Google Pill Style) */
+.chat-input-container {
+  max-width: 860px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px 20px 16px;
+}
+
+.chat-input-bar {
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-xl);
+  padding: 8px 14px 8px 20px;
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  box-shadow: var(--md-sys-elevation-1);
+  transition: border-color var(--md-sys-motion-duration), box-shadow var(--md-sys-motion-duration);
+}
+
+.chat-input-bar:focus-within {
+  border-color: var(--md-sys-color-primary);
+  box-shadow: var(--md-sys-elevation-2);
+}
+
+.chat-textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--md-sys-typescale-font);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 8px 0;
+  max-height: 180px;
+  min-height: 24px;
+  resize: none;
+  outline: none;
+}
+
+.chat-textarea::placeholder {
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.chat-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 2px;
+}
+
+/* Chat Message Bubbles */
+.message-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+  max-width: 860px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 16px;
+}
+
+.message-row.user-row {
+  flex-direction: row-reverse;
+}
+
+.message-content-wrap {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+}
+
+.user-row .message-content-wrap {
+  align-items: flex-end;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+.message-body {
+  padding: 14px 18px;
+  border-radius: var(--md-sys-shape-corner-lg);
+  font-size: 15px;
+  line-height: 1.6;
+  word-break: break-word;
+  color: var(--md-sys-color-on-surface);
+}
+
+.assistant-row .message-body {
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-top-left-radius: 4px;
+}
+
+.user-row .message-body {
+  background-color: var(--md-sys-color-primary-container);
+  color: var(--md-sys-color-on-primary-container);
+  border-top-right-radius: 4px;
+}
+
+.message-footer {
+  margin-top: 6px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Collapsible Meta Details ("v Details") */
+.message-meta-details {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  width: fit-content;
+  max-width: 100%;
+}
+
+.meta-details-summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 3px 10px 3px 6px;
+  border-radius: var(--md-sys-shape-corner-full);
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  user-select: none;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: all var(--md-sys-motion-duration);
+}
+
+.meta-details-summary::-webkit-details-marker {
+  display: none;
+}
+
+.meta-details-summary:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+  border-color: var(--md-sys-color-outline);
+}
+
+.meta-details-summary .expand-icon {
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.message-meta-details[open] .meta-details-summary .expand-icon {
+  transform: rotate(180deg);
+}
+
+.meta-details-body {
+  margin-top: 8px;
+  padding: 10px 14px;
+  border-radius: var(--md-sys-shape-corner-sm);
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--md-sys-typescale-font);
+  font-size: 12.5px;
+  line-height: 1.5;
+  box-shadow: var(--md-sys-elevation-1);
+}
+
+.meta-detail-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.meta-detail-label {
+  font-weight: 600;
+  color: var(--md-sys-color-primary);
+  min-width: 58px;
+  font-size: 11.5px;
+  letter-spacing: 0.3px;
+}
+
+.meta-detail-value {
+  color: var(--md-sys-color-on-surface);
+  word-break: break-word;
+}
+
+.meta-detail-value code {
+  font-family: var(--md-sys-typescale-code);
+  background-color: rgba(255, 255, 255, 0.08);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #c2e7ff;
+}
+
+/* Sidebar Item */
+.sidebar-chat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  box-sizing: border-box;
+  padding: 0 8px 0 14px;
+  border-radius: var(--md-sys-shape-corner-full);
+  color: var(--md-sys-color-on-surface-variant);
+  cursor: pointer;
+  margin-bottom: 2px;
+  transition: background-color var(--md-sys-motion-duration), color var(--md-sys-motion-duration);
+  position: relative;
+  text-decoration: none;
+  overflow: hidden;
+}
+
+.sidebar-chat-item:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  color: var(--md-sys-color-on-surface);
+}
+
+.sidebar-chat-item.active {
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  font-weight: 500;
+}
+
+.sidebar-chat-item .chat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  line-height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-chat-title {
+  flex: 1;
+  font-size: 13.5px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-chat-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--md-sys-motion-duration) ease, visibility var(--md-sys-motion-duration) ease;
+}
+
+.sidebar-chat-item:hover .sidebar-chat-actions,
+.sidebar-chat-item.active .sidebar-chat-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.sidebar-chat-actions .btn-icon {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  min-height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  color: var(--md-sys-color-on-surface-variant);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-chat-actions .btn-icon:hover {
+  background-color: rgba(255, 255, 255, 0.12);
+  color: var(--md-sys-color-on-surface);
+}
+
+.sidebar-chat-actions .action-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Form Group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+}
+
+/* Personality Selection Card */
+.personality-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.personality-card {
+  padding: 14px;
+  border-radius: var(--md-sys-shape-corner-md);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  background-color: var(--md-sys-color-surface-container);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: border-color var(--md-sys-motion-duration), background-color var(--md-sys-motion-duration);
+}
+
+.personality-card:hover {
+  background-color: var(--md-sys-color-surface-container-high);
+  border-color: var(--md-sys-color-outline);
+}
+
+.personality-card.selected {
+  border-color: var(--md-sys-color-primary);
+  background-color: rgba(168, 199, 250, 0.08);
+}
+
+.personality-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.personality-card-desc {
+  font-size: 12px;
+  color: var(--md-sys-color-on-surface-variant);
+  line-height: 1.4;
+}
+
+/* Rule Card in Editor */
+.rule-card {
+  background-color: var(--md-sys-color-surface-container);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: var(--md-sys-shape-corner-md);
+  padding: 16px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.rule-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.rule-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rule-card-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .rule-card-body {
+    grid-template-columns: 1fr;
+  }
+}

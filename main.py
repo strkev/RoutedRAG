@@ -1,39 +1,46 @@
-from langchain.agents import create_agent
-from langgraph.checkpoint.memory import InMemorySaver
-
-from src.models import get_llm, dynamic_model_selection
+import sys
+from src.agent import agent_instance, extract_token_usage
 from src.schemas import Context
-from src.tools import get_weather, locate_user
-from src.embeddings import retriever_tool
-from src.sys_prompt import user_role_prompt
 
-base_llm = get_llm("gemma-4-31b-it")
+def main():
+    print("=" * 60)
+    print("   RoutedRAG Agent CLI (Beenden mit: /end oder exit)")
+    print("=" * 60)
 
-checkpointer = InMemorySaver()
-tools = [locate_user, get_weather, retriever_tool]
+    config = {"configurable": {"thread_id": "cli_session"}}
+    context = Context(user_role="default")
 
-agent = create_agent(
-    model=base_llm,
-    tools=tools,
-    middleware=[user_role_prompt, dynamic_model_selection],
-    context_schema=Context,
-    checkpointer=checkpointer,
-)
+    while True:
+        try:
+            user_input = input("\nDu: ").strip()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAuf Wiedersehen!")
+            break
 
-config = {'configurable': {'thread_id': '1'}}
+        if not user_input:
+            continue
 
-response = agent.invoke(
-    {"messages": [{"role": "user", "content": "What is the weather like? And what do you know about Apple?"}]},
-    config=config,
-    context=Context(userId="ABCD123", user_role="yoda"),
-)
+        if user_input.lower() in ["/end", "exit", "quit"]:
+            print("CLI beendet. Auf Wiedersehen!")
+            break
 
-final_text = response["messages"][-1].content
-print(response["messages"][-1].content)
-print("Modell-Metadaten:", response["messages"][-1].response_metadata)
+        try:
+            response = agent_instance.invoke(
+                {"messages": [{"role": "user", "content": user_input}]},
+                config=config,
+                context=context,
+            )
 
-'''
-structured_llm = llm.with_structured_output(WeatherResponse)
-structured_result = structured_llm.invoke(f"Extract weather info:\n\n{final_text}")
-print("Strukturiert:", structured_result)
-'''
+            assistant_msg = response["messages"][-1]
+            print(f"\nAssistent:\n{assistant_msg.content}")
+
+            # Token Usage
+            tokens = extract_token_usage(response)
+            model_info = getattr(context, "selected_model", "standard")
+            print(f"\n[Modell: {model_info} | Input: {tokens['prompt_tokens']} | Output: {tokens['completion_tokens']} | Gesamt: {tokens['total_tokens']} Tokens]")
+
+        except Exception as e:
+            print(f"\nFehler bei der Ausführung: {e}")
+
+if __name__ == "__main__":
+    main()

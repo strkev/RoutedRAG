@@ -19,14 +19,23 @@ app = FastAPI(
     description="Modular Agent API with dynamic routing, RAG and Material UI"
 )
 
-# CORS Middleware
+from src.logger import logger
+
+raw_origins = os.getenv("ALLOWED_ORIGINS", "*").strip()
+allowed_origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+allow_credentials = False if "*" in allowed_origins else True
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=allow_credentials,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/health", tags=["system"])
+async def health():
+    return {"status": "ok", "version": "2.1.0"}
 
 @app.get("/favicon.ico", include_in_schema=False)
 @app.get("/apple-touch-icon.png", include_in_schema=False)

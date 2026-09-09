@@ -3,6 +3,8 @@ import importlib
 from typing import Dict, List, Any, Callable
 from langchain_core.tools import BaseTool
 
+from src.logger import logger
+
 class ToolRegistry:
     def __init__(self):
         self._tools: Dict[str, BaseTool] = {}
@@ -30,7 +32,7 @@ class ToolRegistry:
                         if isinstance(attr, BaseTool):
                             self.register(attr, active=True)
                 except Exception as e:
-                    print(f"[ToolRegistry] Fehler beim Laden von {module_name}: {e}")
+                    logger.error(f"Fehler beim Laden von {module_name}: {e}")
 
     def get_all_tools(self) -> List[BaseTool]:
         active_tools = []

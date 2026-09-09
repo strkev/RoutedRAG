@@ -4,13 +4,17 @@ import json
 from datetime import datetime
 from typing import Optional, List, Dict, Any
 
+from src.logger import logger
+
 DB_DIR = "data"
 DB_PATH = os.path.join(DB_DIR, "chats.db")
 
 def get_db():
     os.makedirs(DB_DIR, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False, timeout=10.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA busy_timeout=5000;")
     return conn
 
 def init_db():
@@ -38,14 +42,13 @@ def init_db():
                 FOREIGN KEY (chat_id) REFERENCES chats (id) ON DELETE CASCADE
             )
         """)
-        # Safe migration if table already exists without token_usage
         cursor = conn.execute("PRAGMA table_info(messages)")
         columns = [row["name"] for row in cursor.fetchall()]
         if "token_usage" not in columns:
             try:
                 conn.execute("ALTER TABLE messages ADD COLUMN token_usage TEXT")
             except Exception as e:
-                print(f"[DB] Migration note: {e}")
+                logger.debug(f"[DB] Migration note: {e}")
         conn.commit()
 
 def generate_title(content: str) -> str:

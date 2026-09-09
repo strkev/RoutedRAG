@@ -4,7 +4,6 @@ from typing import Literal, Union, Optional, List, Dict, Any
 
 @dataclass
 class Context:
-    """Runtime context passed to agent and middlewares."""
     user_role: str = "default"
     dynamic_model: bool = True
     selected_model: Optional[str] = None
@@ -21,8 +20,8 @@ class RoutingRule(BaseModel):
     active: bool = True
 
 class RoutingConfig(BaseModel):
-    default_connection: Optional[str] = "default"
-    default_model: str = "google/gemma-4-31b-it"
+    default_connection: Optional[str] = None
+    default_model: Optional[str] = None
     rules: List[RoutingRule] = []
 
 class ChatMessageRequest(BaseModel):
@@ -42,21 +41,21 @@ class ProviderConnection(BaseModel):
     name: str
     base_url: str
     api_key: Optional[str] = ""
-    default_model: Optional[str] = "google/gemma-4-31b-it"
+    default_model: Optional[str] = None
 
 class MultiConnectionConfig(BaseModel):
-    default_connection: str = "default"
+    default_connection: Optional[str] = None
     connections: List[ProviderConnection] = []
 
 class ConnectionConfig(BaseModel):
     api_key: Optional[str] = ""
     base_url: str
-    default_model: Optional[str] = "google/gemma-4-31b-it"
+    default_model: Optional[str] = None
 
 class AppSettings(BaseModel):
     dynamic_model_enabled: bool = True
     active_personality: str = "default"
-    default_model: str = "google/gemma-4-31b-it"
+    default_model: Optional[str] = None
     rag_folder: str = "data/documents"
     custom_prompt: str = ""
 

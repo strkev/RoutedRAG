@@ -14,7 +14,7 @@ def get_current_settings() -> dict:
     defaults = {
         "dynamic_model_enabled": True,
         "active_personality": "default",
-        "default_model": get_connection_config().get("default_model", "google/gemma-4-31b-it"),
+        "default_model": get_connection_config().get("default_model", os.getenv("DEFAULT_MODEL", "")),
         "rag_folder": rag_manager.folder_path,
         "custom_prompt": ""
     }

@@ -9,11 +9,11 @@ router = APIRouter(prefix="/api", tags=["rules"])
 @router.get("/rules")
 async def get_rules():
     conns = get_connections_data()
-    def_conn = conns.get("default_connection", "uni")
+    def_conn = conns.get("default_connection", "")
     if not os.path.exists(RULES_FILE):
         return {
             "default_connection": def_conn,
-            "default_model": "google/gemma-4-31b-it",
+            "default_model": os.getenv("DEFAULT_MODEL", ""),
             "rules": []
         }
     with open(RULES_FILE, "r", encoding="utf-8") as f:

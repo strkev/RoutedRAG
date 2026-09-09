@@ -1,0 +1,12 @@
+{
+  "default_connection": "provider_1",
+  "connections": [
+    {
+      "id": "provider_1",
+      "name": "Mein Provider",
+      "base_url": "http://localhost:11434/v1",
+      "api_key": "",
+      "default_model": "mein-modell"
+    }
+  ]
+}

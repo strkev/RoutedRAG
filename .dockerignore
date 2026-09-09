@@ -10,4 +10,11 @@ __pycache__
 env/
 venv/
 .venv/
-data/chats.db
+.env
+.env.*
+config/connections.json
+config/app_settings.json
+data/*.db
+data/chats.db*
+data/faiss_index/
+data/documents/

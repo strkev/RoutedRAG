@@ -1,6 +1,7 @@
 from typing import Dict, Any
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents import create_agent
+from langchain_openai import ChatOpenAI
 
 from src.models import get_llm, dynamic_model_selection
 from src.schemas import Context
@@ -10,7 +11,14 @@ from src.sys_prompt import user_role_prompt
 checkpointer = InMemorySaver()
 
 def build_agent():
-    base_llm = get_llm()
+    try:
+        base_llm = get_llm()
+    except Exception:
+        base_llm = ChatOpenAI(
+            model="unconfigured",
+            api_key="placeholder",
+            base_url="http://127.0.0.1:0"
+        )
     tools = registry.get_all_tools()
     return create_agent(
         model=base_llm,

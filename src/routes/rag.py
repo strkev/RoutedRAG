@@ -3,6 +3,7 @@ from fastapi import APIRouter, UploadFile, File
 from src.schemas import RagConfig
 from src.rag_manager import rag_manager
 from src.routes.settings import get_current_settings, save_current_settings
+from src.logger import logger
 
 router = APIRouter(prefix="/api/rag", tags=["rag"])
 

@@ -34,9 +34,8 @@ def main():
             assistant_msg = response["messages"][-1]
             print(f"\nAssistent:\n{assistant_msg.content}")
 
-            # Token Usage
             tokens = extract_token_usage(response)
-            model_info = getattr(context, "selected_model", "standard")
+            model_info = getattr(context, "selected_model", "")
             print(f"\n[Modell: {model_info} | Input: {tokens['prompt_tokens']} | Output: {tokens['completion_tokens']} | Gesamt: {tokens['total_tokens']} Tokens]")
 
         except Exception as e:
